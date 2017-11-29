@@ -1,0 +1,22 @@
+---
+
+- hosts: localhost
+
+  vars:
+    keys_directory: keys
+    keys_vault: "{{ keys_directory }}/keys.vault"
+    private_key_file: do-test-harness
+    public_key_file: do-test-harness.pub
+
+  tasks:
+
+  - include_vars: "{{ keys_vault }}"
+
+  - name: Unpack Key Files
+    copy: content={{ item.content }} dest={{ keys_directory }}/{{ item.dest }} mode=600
+    no_log: yes
+    with_items:
+    - content: "{{ private_key }}"
+      dest:    "{{ private_key_file }}"
+    - content: "{{ public_key }}"
+      dest:    "{{ public_key_file }}"

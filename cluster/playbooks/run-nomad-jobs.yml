@@ -1,0 +1,35 @@
+---
+- hosts: nodes
+
+  tasks:
+
+  - include_vars: vars.yml
+
+  - name: Create Nomad Directories
+    file: path={{ item }} state=directory
+    with_items:
+    - "{{ nomad_dir }}"
+    - "{{ jobs_dir }}"
+    - "{{ scripts_dir }}"
+
+  - name: Copy Job Scripts
+    template: src=templates/package_test.py dest={{ scripts_dir }}/package_test.py mode=744
+
+- hosts: nomad1
+
+  tasks:
+
+  - include_vars: vars.yml
+
+  - name: Load Package Data
+    include_vars: file={{ data_source }}
+
+  - name: Template Job Files
+    template: src=templates/pypi.nomad dest={{ jobs_dir }}/{{ package.name }}_{{ package.version }}.nomad
+    with_items: "{{ packages }}"
+    loop_control: { loop_var: package }
+
+  - name: Start Jobs
+    command: nomad run -detach {{ jobs_dir }}/{{ package.name }}_{{ package.version }}.nomad
+    with_items: "{{ packages }}"
+    loop_control: { loop_var: package }
