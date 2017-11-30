@@ -12,4 +12,4 @@ cd /astor && java -cp $(cat /tmp/astor-classpath.txt):$SUBJECT_CLASSPATH:target/
        -location $BUGGY_DIR -package org.apache.commons\
        -javacompliancelevel 7 -alternativecompliancelevel 7 -jvm4testexecution $JVM\
        -flthreshold 0.2 -id $CLASSNAME -mode statement -stopfirst true\
-       -failing $TRIGGERING_TEST'
+       -failing $TRIGGERING_TEST

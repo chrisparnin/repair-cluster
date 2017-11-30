@@ -91,11 +91,9 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
 
     BUGGY_DIR="$TMP_DIR/$PID-${BID}b"
     FIXED_DIR="$TMP_DIR/$PID-${BID}f"
-    ARCHIVE="$TMP_DIR/$CLASSNAME.tar.bz2"
 
     # alias defects4j command
-    d4j="docker run -it -v$TMP_DIR:$TMP_DIR -v$BUGGY_DIR:$BUGGY_DIR chrisparnin:defects4j defects4j"
-
+    d4j_container="docker run --rm -it -v$TMP_DIR:$TMP_DIR -v$BUGGY_DIR:$BUGGY_DIR chrisparnin:defects4j"
 
     # Defects4J directories for given project id (PID)
     DIR_PROJECT="$D4J_HOME/framework/projects/$PID"
@@ -104,11 +102,13 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
     # Checkout the buggy version
     # Remove the buggy dir as checkout does not undo commenting out triggering tests.
     rm -rf $BUGGY_DIR
-    $d4j checkout -p$PID -v${BID}b -w $BUGGY_DIR || die "Can't checkout buggy version"
+    $d4j_container defects4j checkout -p$PID -v${BID}b -w $BUGGY_DIR || die "Can't checkout buggy version"
     # Checkout the fixed version
     #defects4j checkout -p$PID -v${BID}f -w $FIXED_DIR || die "Can't checkout fixed version"
 
-    SUBJECT_TESTDIR=$(cd $BUGGY_DIR && $d4j export -p dir.src.tests)
+    $d4j_container bash -c "cd $BUGGY_DIR && defects4j compile" || die "cannot compile"
+
+    #SUBJECT_TESTDIR=$($d4j_container bash -c "cd $BUGGY_DIR && defects4j export -p dir.src.tests")
 
     if [ $MODE = "user" ]; then
         echo "removing triggering tests from dev and adding user tests"
@@ -120,12 +120,10 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
         #mkdir -p $BUGGY_DIR/$SUBJECT_TESTDIR/usertest
         #cp $TEST_DIR/$CLASSNAME.java $BUGGY_DIR/$SUBJECT_TESTDIR/usertest || die 'could not copy user test case'
         TRIGGERING_TEST=$CLASSNAME
-        cp $TEST_DIR/$CLASSNAME.java $BUGGY_DIR/$SUBJECT_TESTDIR/ || die 'could not copy user test case'
+        cp $TEST_DIR/$CLASSNAME.java $BUGGY_DIR/$SUBJECT_TESTDIR/ || die "could not copy user test case"
     else
-        TRIGGERING_TEST=$($d4j info -p$PID -b$BID | grep "Root cause in trigger" --after-context=1 | tail -n 1 | tr -d "-" | awk -F'::' '{print $1}')
+        TRIGGERING_TEST=$($d4j_container defects4j info -p$PID -b$BID | grep "Root cause in trigger" --after-context=1 | tail -n 1 | tr -d "-" | awk -F'::' '{print $1}')
     fi
-
-    cd $BUGGY_DIR && $d4j compile
 
     # Bug with spoon: https://github.com/INRIA/spoon/issues/1274
     # Recommended by astor's authors to delete all package-info.java
@@ -134,8 +132,8 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
     #ASTOR_CLASSPATH="/home/vagrant/.m2/repository/com/googlecode/json-simple/json-simple/1.1/json-simple-1.1.jar:/home/vagrant/.m2/repository/com/gzoltar/gzoltar/0.1.1/gzoltar-0.1.1.jar:/home/vagrant/.m2/repository/com/martiansoftware/jsap/2.1/jsap-2.1.jar:/home/vagrant/.m2/repository/commons-cli/commons-cli/1.2/commons-cli-1.2.jar:/home/vagrant/.m2/repository/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar:/home/vagrant/.m2/repository/commons-io/commons-io/2.5/commons-io-2.5.jar:/home/vagrant/.m2/repository/fr/inria/gforge/spoon/spoon-core/5.4.0/spoon-core-5.4.0.jar:/home/vagrant/.m2/repository/fr/spoonlab/jte/0.0.1/jte-0.0.1.jar:/home/vagrant/.m2/repository/junit/junit/4.11/junit-4.11.jar:/home/vagrant/.m2/repository/log4j/log4j/1.2.17/log4j-1.2.17.jar:/home/vagrant/.m2/repository/org/eclipse/jdt/org.eclipse.jdt.core/3.12.0.v20160516-2131/org.eclipse.jdt.core-3.12.0.v20160516-2131.jar:/home/vagrant/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"
     #ASTOR_CLASSPATH=$(cd ~/astor && mvn dependency:build-classpath | egrep -v "(^\[INFO\]|^\[WARNING\])" | egrep -v "Download")
     #SUBJECT_CLASSPATH=$(cd $BUGGY_DIR && mvn dependency:build-classpath | egrep -v "(^\[INFO\]|^\[WARNING\])" | egrep -v "Download")
-    SUBJECT_CLASSPATH=$(cd $BUGGY_DIR && $d4j export -p cp.test)
-    echo "meta:" $CLASSNAME, $PID, $BID, $TRIGGERING_TEST
+    SUBJECT_CLASSPATH=$($d4j_container bash -c "cd $BUGGY_DIR && defects4j export -p cp.test 2> /dev/null")
+    echo "meta:", $SUBJECT_CLASSPATH, $CLASSNAME, $PID, $BID, $TRIGGERING_TEST
     #echo $BUGGY_DIR
     #echo $ASTOR_CLASSPATH:$SUBJECT_CLASSPATH "---"
 
