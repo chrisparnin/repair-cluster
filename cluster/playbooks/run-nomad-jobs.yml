@@ -3,6 +3,9 @@
 
   tasks:
 
+  - set_fact: epoch="{{lookup('pipe','date +%Y%m%d%H%M%S')}}"
+  - debug: var=epoch
+
   - include_vars: vars.yml
 
   - name: Create Nomad Directories
@@ -12,8 +15,11 @@
     - "{{ jobs_dir }}"
     - "{{ scripts_dir }}"
 
-  - name: Copy Job Scripts
-    template: src=templates/package_test.py dest={{ scripts_dir }}/package_test.py mode=744
+#  - name: Copy Job Scripts
+#    template: src=templates/package_test.py dest={{ scripts_dir }}/package_test.py mode=744
+
+  - copy: src=templates/repair_user_test.sh dest={{ scripts_dir }}/repair_user_test.sh mode=744
+  - copy: src=templates/run_astor.sh dest={{ scripts_dir }}/run_astor.sh mode=744
 
 - hosts: nomad1
 
@@ -25,11 +31,11 @@
     include_vars: file={{ data_source }}
 
   - name: Template Job Files
-    template: src=templates/pypi.nomad dest={{ jobs_dir }}/{{ package.name }}_{{ package.version }}.nomad
+    template: src=templates/pypi.nomad dest={{ jobs_dir }}/{{ package.bug }}_{{ package.mode }}.nomad
     with_items: "{{ packages }}"
     loop_control: { loop_var: package }
 
   - name: Start Jobs
-    command: nomad run -detach {{ jobs_dir }}/{{ package.name }}_{{ package.version }}.nomad
+    command: nomad run -detach {{ jobs_dir }}/{{ package.bug }}_{{ package.mode }}.nomad
     with_items: "{{ packages }}"
     loop_control: { loop_var: package }

@@ -19,8 +19,9 @@ function die {
 }
 
 # Check the number of arguments
-[ $# -eq 2 ] || die "usage: $0 <issuer-tracker-id> <--user or --dev>"
+[ $# -eq 2 ] || [$# -eq 3 ] || die "usage: $0 <issuer-tracker-id> <--user or --dev> [consul-address]"
 ISSUE_ID=$1
+client_addr=$3
 
 # The csv file that maps Defects4J's bug id to the issue id
 ID_CSV="../data/bug-tracker-IDs.csv"
@@ -93,7 +94,7 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
     FIXED_DIR="$TMP_DIR/$PID-${BID}f"
 
     # alias defects4j command
-    d4j_container="docker run --rm -it -v$TMP_DIR:$TMP_DIR -v$BUGGY_DIR:$BUGGY_DIR chrisparnin:defects4j"
+    d4j_container="docker run --rm -it -v$TMP_DIR:$TMP_DIR -v$BUGGY_DIR:$BUGGY_DIR chrisparnin/astor-d4j"
 
     # Defects4J directories for given project id (PID)
     DIR_PROJECT="$D4J_HOME/framework/projects/$PID"
@@ -143,8 +144,11 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
     # :target/classes
     DEP=$SUBJECT_CLASSPATH
 
+    docker run -it -v$BUGGY_DIR:$BUGGY_DIR -vscripts:/scripts chrisparnin/astor-d4j /scripts/run_astor.sh $SUBJECT_CLASSPATH $DEP $BUGGY_DIR $CLASSNAME $TRIGGERING_TEST > /tmp/astor.txt
 
-    docker run -it -v$BUGGY_DIR:$BUGGY_DIR -v/Users/gameweld/projects/repair-cluster/cluster/scripts:/scripts chrisparnin:astor /scripts/run_astor.sh $SUBJECT_CLASSPATH $DEP $BUGGY_DIR $CLASSNAME $TRIGGERING_TEST
+    astor_output='{"output": "$(cat /tmp/astor.txt)" }'
+
+    curl --request PUT -H "Content-Type: application/json" --data "$astor_output" http://$client_addr/v1/kv/$BID/$MODE
 
 #       -ignoredtestcases $IGNORETESTCASES\
 #       -srctestfolder /user_tests/$CLASSNAME -bintestfolder /user_tests/$CLASSNAME

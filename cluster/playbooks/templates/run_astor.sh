@@ -5,7 +5,7 @@ BUGGY_DIR=$3
 CLASSNAME=$4
 TRIGGERING_TEST=$5
 
-JVM=/usr/lib/jvm/java-8-oracle/bin/
+JVM=/usr/lib/jvm/java-7-oracle/bin/
 
 cd /astor && java -cp $(cat /tmp/astor-classpath.txt):$SUBJECT_CLASSPATH:target/classes\
        fr.inria.main.evolution.MainjGenProg -dependencies $DEP -maxgen 400\

@@ -45,8 +45,8 @@
     with_items:
     - docker-py
 
-  - name: Pull Docker Python Image
-    docker_image: name=python tag=2.7.13-onbuild
+  - name: Pull Docker Astor-D4j Image
+    docker_image: name=chrisparnin/astor-d4j
 
   - name: Create Volume Filesystem
     filesystem: fstype=xfs dev={{ volume }}

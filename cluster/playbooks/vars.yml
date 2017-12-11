@@ -1,4 +1,4 @@
-data_source: ../data/short.json
+data_source: ../data/bugs.json
 nomad_dir: "{{ ansible_env.HOME }}/nomad"
 jobs_dir: "{{ nomad_dir }}/jobs"
 scripts_dir: "{{ nomad_dir }}/scripts"

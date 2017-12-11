@@ -1,4 +1,4 @@
-job "{{ package.name }}_{{ package.version }}" {
+job "{{ package.bug }}_{{ package.mode }}_{{epoch}}" {
 
   type = "batch"
   datacenters = [ "dc1" ]
@@ -16,12 +16,12 @@ job "{{ package.name }}_{{ package.version }}" {
         memory = 512
       }
       config {
-        image = "python:2.7.13-onbuild"
+        image = "chrisparnin/astor-d4j"
         volumes = ["{{ scripts_dir }}:/scripts"]
         command = "bash"
         args = [
           "-c",
-          "/scripts/package_test.py '{{ package.name }}' '{{ package.version }}' '{{ consul_client_address }}:8500'"
+          "/scripts/repair_user_test.sh '{{ package.bug }}' '--{{ package.mode }}' '{{ consul_client_address }}:8500'"
         ]
       }
     }

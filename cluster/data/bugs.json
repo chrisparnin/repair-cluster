@@ -1,0 +1,6 @@
+{
+    "packages": [
+        {"bug": "MATH-1021", "mode": "dev"}, 
+        {"bug": "MATH-988",  "mode": "dev"}
+    ]
+}
