@@ -13,15 +13,15 @@ job "{{ package.bug }}_{{ package.mode }}_{{epoch}}" {
     task "install-and-import" {
       driver = "docker"
       resources {
-        memory = 512
+        memory = 2048
       }
       config {
         image = "chrisparnin/astor-d4j"
-        volumes = ["{{ scripts_dir }}:/scripts", "/tmp:/tmp"]
+        volumes = ["{{ scripts_dir }}:/scripts"]
         command = "bash"
         args = [
           "-c",
-          "/scripts/repair_user_test.sh '{{ package.bug }}' '--{{ package.mode }}' '{{ consul_client_address }}:8500'"
+          "/scripts/repair_user_test.sh '{{ package.bug }}' '{{package.PID}}' '{{package.BID}}' '--{{ package.mode }}' '{{ consul_client_address }}:8500'"
         ]
       }
     }
