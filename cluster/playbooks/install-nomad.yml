@@ -45,8 +45,6 @@
     with_items:
     - docker-py
 
-  - name: Pull Docker Astor-D4j Image
-    docker_image: name=chrisparnin/astor-d4j
 
   - name: Create Volume Filesystem
     filesystem: fstype=xfs dev={{ volume }}
@@ -61,8 +59,20 @@
     - role: brianshumate.nomad
       nomad_bind_address: 0.0.0.0
       nomad_docker_enable: yes
+      #nomad_config_custom:
+      #  client:
+      #    options: {\"docker.cleanup.image\"=\"false\"}
+            
 
-    #- role: brianshumate.consul
-    #  consul_client_address: 0.0.0.0
-    #  consul_bind_address: 0.0.0.0
-    #  consul_data_path: "{{ data_dir }}"
+
+    - role: brianshumate.consul
+      consul_client_address: 0.0.0.0
+      #consul_bind_address: 0.0.0.0
+      consul_data_path: "{{ data_dir }}"
+      consul_encrypt_enable: false
+
+
+  # Keeping last since slow when debugging roles.
+  tasks:
+    - name: Pull Docker Astor-D4j Image
+      docker_image: name=chrisparnin/astor-d4j

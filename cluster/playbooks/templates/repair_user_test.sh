@@ -125,7 +125,10 @@ DEP=$SUBJECT_CLASSPATH
 #astor_output='{"output": "$(cat /tmp/astor.txt)" }'
 
 cat /tmp/astor.txt
-#curl --request PUT -H "Content-Type: application/json" --data "$astor_output" http://$client_addr/v1/kv/$BID/$MODE
+
+astor_output=$(</astor/output_astor/AstorMain-$CLASSNAME/astor_output.json)
+
+curl --request PUT -H "Content-Type: application/json" --data "$astor_output" http://$client_addr/v1/kv/$PID-$BID/$MODE
 
 #/astor/output_astor/AstorMain-$CLASSNAME/astor_output.json
 
