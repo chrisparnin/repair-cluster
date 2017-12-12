@@ -58,10 +58,11 @@
 
   roles:
 
-    - role: brianshumate.consul
-      consul_client_address: 0.0.0.0
-      consul_data_path: "{{ data_dir }}"
-
     - role: brianshumate.nomad
       nomad_bind_address: 0.0.0.0
       nomad_docker_enable: yes
+
+    #- role: brianshumate.consul
+    #  consul_client_address: 0.0.0.0
+    #  consul_bind_address: 0.0.0.0
+    #  consul_data_path: "{{ data_dir }}"

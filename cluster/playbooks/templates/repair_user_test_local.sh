@@ -70,7 +70,7 @@ D4J_HOME=/defects4j
 #export PATH=$D4J_HOME/framework/bin:$PATH
 
 # Check if have docker client
-#command -v docker >/dev/null || die "docker must be installed on system."
+command -v docker >/dev/null || die "docker must be installed on system."
 
 # Create temporary directory, if necessary
 mkdir -p $TMP_DIR
@@ -93,6 +93,9 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
     BUGGY_DIR="$TMP_DIR/$PID-${BID}b"
     FIXED_DIR="$TMP_DIR/$PID-${BID}f"
 
+    # alias defects4j command
+    d4j_container="docker run --rm -it -v$TMP_DIR:$TMP_DIR -v$BUGGY_DIR:$BUGGY_DIR chrisparnin/astor-d4j"
+
     # Defects4J directories for given project id (PID)
     DIR_PROJECT="$D4J_HOME/framework/projects/$PID"
     DIR_TRIGGER_TESTS="$DIR_PROJECT/trigger_tests"
@@ -100,11 +103,11 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
     # Checkout the buggy version
     # Remove the buggy dir as checkout does not undo commenting out triggering tests.
     rm -rf $BUGGY_DIR
-    defects4j checkout -p$PID -v${BID}b -w $BUGGY_DIR || die "Can't checkout buggy version"
+    $d4j_container defects4j checkout -p$PID -v${BID}b -w $BUGGY_DIR || die "Can't checkout buggy version"
     # Checkout the fixed version
     #defects4j checkout -p$PID -v${BID}f -w $FIXED_DIR || die "Can't checkout fixed version"
 
-    cd $BUGGY_DIR && defects4j compile || die "cannot compile"
+    $d4j_container bash -c "cd $BUGGY_DIR && defects4j compile" || die "cannot compile"
 
     #SUBJECT_TESTDIR=$($d4j_container bash -c "cd $BUGGY_DIR && defects4j export -p dir.src.tests")
 
@@ -120,7 +123,7 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
         TRIGGERING_TEST=$CLASSNAME
         cp $TEST_DIR/$CLASSNAME.java $BUGGY_DIR/$SUBJECT_TESTDIR/ || die "could not copy user test case"
     else
-        TRIGGERING_TEST=$(defects4j info -p$PID -b$BID | grep "Root cause in trigger" --after-context=1 | tail -n 1 | tr -d "-" | awk -F'::' '{print $1}')
+        TRIGGERING_TEST=$($d4j_container defects4j info -p$PID -b$BID | grep "Root cause in trigger" --after-context=1 | tail -n 1 | tr -d "-" | awk -F'::' '{print $1}')
     fi
 
     # Bug with spoon: https://github.com/INRIA/spoon/issues/1274
@@ -130,7 +133,7 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
     #ASTOR_CLASSPATH="/home/vagrant/.m2/repository/com/googlecode/json-simple/json-simple/1.1/json-simple-1.1.jar:/home/vagrant/.m2/repository/com/gzoltar/gzoltar/0.1.1/gzoltar-0.1.1.jar:/home/vagrant/.m2/repository/com/martiansoftware/jsap/2.1/jsap-2.1.jar:/home/vagrant/.m2/repository/commons-cli/commons-cli/1.2/commons-cli-1.2.jar:/home/vagrant/.m2/repository/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar:/home/vagrant/.m2/repository/commons-io/commons-io/2.5/commons-io-2.5.jar:/home/vagrant/.m2/repository/fr/inria/gforge/spoon/spoon-core/5.4.0/spoon-core-5.4.0.jar:/home/vagrant/.m2/repository/fr/spoonlab/jte/0.0.1/jte-0.0.1.jar:/home/vagrant/.m2/repository/junit/junit/4.11/junit-4.11.jar:/home/vagrant/.m2/repository/log4j/log4j/1.2.17/log4j-1.2.17.jar:/home/vagrant/.m2/repository/org/eclipse/jdt/org.eclipse.jdt.core/3.12.0.v20160516-2131/org.eclipse.jdt.core-3.12.0.v20160516-2131.jar:/home/vagrant/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"
     #ASTOR_CLASSPATH=$(cd ~/astor && mvn dependency:build-classpath | egrep -v "(^\[INFO\]|^\[WARNING\])" | egrep -v "Download")
     #SUBJECT_CLASSPATH=$(cd $BUGGY_DIR && mvn dependency:build-classpath | egrep -v "(^\[INFO\]|^\[WARNING\])" | egrep -v "Download")
-    SUBJECT_CLASSPATH=$(cd $BUGGY_DIR && defects4j export -p cp.test 2> /dev/null)
+    SUBJECT_CLASSPATH=$($d4j_container bash -c "cd $BUGGY_DIR && defects4j export -p cp.test 2> /dev/null")
     echo "meta:", $SUBJECT_CLASSPATH, $CLASSNAME, $PID, $BID, $TRIGGERING_TEST
     #echo $BUGGY_DIR
     #echo $ASTOR_CLASSPATH:$SUBJECT_CLASSPATH "---"
@@ -141,12 +144,11 @@ for line in $(grep ",$ISSUE_ID," $ID_CSV | cut -f1,2,3 -d','); do
     # :target/classes
     DEP=$SUBJECT_CLASSPATH
 
-    /scripts/run_astor.sh $SUBJECT_CLASSPATH $DEP $BUGGY_DIR $CLASSNAME $TRIGGERING_TEST > /tmp/astor.txt
+    docker run -it -v$BUGGY_DIR:$BUGGY_DIR -vscripts:/scripts chrisparnin/astor-d4j /scripts/run_astor.sh $SUBJECT_CLASSPATH $DEP $BUGGY_DIR $CLASSNAME $TRIGGERING_TEST > /tmp/astor.txt
 
     astor_output='{"output": "$(cat /tmp/astor.txt)" }'
 
-    echo $astor_output
-    #curl --request PUT -H "Content-Type: application/json" --data "$astor_output" http://$client_addr/v1/kv/$BID/$MODE
+    curl --request PUT -H "Content-Type: application/json" --data "$astor_output" http://$client_addr/v1/kv/$BID/$MODE
 
 #       -ignoredtestcases $IGNORETESTCASES\
 #       -srctestfolder /user_tests/$CLASSNAME -bintestfolder /user_tests/$CLASSNAME
