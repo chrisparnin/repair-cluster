@@ -77,20 +77,14 @@ DIR_PROJECT="$D4J_HOME/framework/projects/$PID"
 DIR_TRIGGER_TESTS="$DIR_PROJECT/trigger_tests"
 
 # Checkout the buggy version
-# Remove the buggy dir as checkout does not undo commenting out triggering tests.
-rm -rf $BUGGY_DIR
 defects4j checkout -p$PID -v${BID}b -w $BUGGY_DIR || die "Can't checkout buggy version"
-# Checkout the fixed version
-#defects4j checkout -p$PID -v${BID}f -w $FIXED_DIR || die "Can't checkout fixed version"
-
-cd $BUGGY_DIR && defects4j compile || die "cannot compile"
-
 
 if [ $MODE = "user" ]; then
     echo "removing triggering tests from dev and adding user tests"
     # Remove triggering dev provided triggering tests:
 
-    SUBJECT_TESTDIR=$(cd $BUGGY_DIR && defects4j export -p dir.src.tests)
+    SUBJECT_TESTDIR=$(cd $BUGGY_DIR && defects4j export -p dir.src.tests 2> /dev/null)
+    echo "subject test dir: $SUBJECT_TESTDIR"
     $D4J_HOME/framework/util/rm_broken_tests.pl $DIR_TRIGGER_TESTS/$BID $BUGGY_DIR/$SUBJECT_TESTDIR || die "Could not comment out triggering test."
 
     # Copy user test
@@ -102,6 +96,8 @@ if [ $MODE = "user" ]; then
 else
     TRIGGERING_TEST=$(defects4j info -p$PID -b$BID | grep "Root cause in trigger" --after-context=1 | tail -n 1 | tr -d "-" | awk -F'::' '{print $1}')
 fi
+
+cd $BUGGY_DIR && defects4j compile || die "cannot compile"
 
 # Bug with spoon: https://github.com/INRIA/spoon/issues/1274
 # Recommended by astor's authors to delete all package-info.java
@@ -121,7 +117,7 @@ echo "meta:", $SUBJECT_CLASSPATH, $CLASSNAME, $PID, $BID, $TRIGGERING_TEST
 # :target/classes
 DEP=$SUBJECT_CLASSPATH
 
-/scripts/run_astor.sh $SUBJECT_CLASSPATH $DEP $BUGGY_DIR $CLASSNAME $TRIGGERING_TEST > /tmp/astor.txt
+/scripts/run_astor.sh $SUBJECT_CLASSPATH $DEP $BUGGY_DIR $CLASSNAME $TRIGGERING_TEST | tee /tmp/astor.txt
 #astor_output='{"output": "$(cat /tmp/astor.txt)" }'
 
 cat /tmp/astor.txt
