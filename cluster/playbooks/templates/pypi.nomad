@@ -17,7 +17,7 @@ job "{{ package.bug }}_{{ package.mode }}_{{epoch}}" {
       }
       config {
         image = "chrisparnin/astor-d4j"
-        volumes = ["{{ scripts_dir }}:/scripts"]
+        volumes = ["{{ scripts_dir }}:/scripts", "{{ job_data_dir }}:/data"]
         command = "bash"
         args = [
           "-c",

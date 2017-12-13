@@ -27,10 +27,9 @@ client_addr=$5
 ID_CSV="/data/bug-tracker-IDs.csv"
 # The temporary directory used to checkout the buggy and fixed program version
 TMP_DIR="/tmp/TestsTested"
+
 # The directory of the user-submitted triggering tests
-# TEST_DIR=$(readlink -f "../test_extraction/user_test")
-
-
+USERTEST_DIR=/data/user_test
 
 
 function removeTriggeringTests
@@ -86,11 +85,12 @@ defects4j checkout -p$PID -v${BID}b -w $BUGGY_DIR || die "Can't checkout buggy v
 
 cd $BUGGY_DIR && defects4j compile || die "cannot compile"
 
-#SUBJECT_TESTDIR=$($d4j_container bash -c "cd $BUGGY_DIR && defects4j export -p dir.src.tests")
 
 if [ $MODE = "user" ]; then
     echo "removing triggering tests from dev and adding user tests"
     # Remove triggering dev provided triggering tests:
+
+    SUBJECT_TESTDIR=$(cd $BUGGY_DIR && defects4j export -p dir.src.tests)
     $D4J_HOME/framework/util/rm_broken_tests.pl $DIR_TRIGGER_TESTS/$BID $BUGGY_DIR/$SUBJECT_TESTDIR || die "Could not comment out triggering test."
 
     # Copy user test
@@ -98,7 +98,7 @@ if [ $MODE = "user" ]; then
     #mkdir -p $BUGGY_DIR/$SUBJECT_TESTDIR/usertest
     #cp $TEST_DIR/$CLASSNAME.java $BUGGY_DIR/$SUBJECT_TESTDIR/usertest || die 'could not copy user test case'
     TRIGGERING_TEST=$CLASSNAME
-    cp $TEST_DIR/$CLASSNAME.java $BUGGY_DIR/$SUBJECT_TESTDIR/ || die "could not copy user test case"
+    cp $USERTEST_DIR/$CLASSNAME.java $BUGGY_DIR/$SUBJECT_TESTDIR/ || die "could not copy user test case"
 else
     TRIGGERING_TEST=$(defects4j info -p$PID -b$BID | grep "Root cause in trigger" --after-context=1 | tail -n 1 | tr -d "-" | awk -F'::' '{print $1}')
 fi

@@ -76,3 +76,9 @@
   tasks:
     - name: Pull Docker Astor-D4j Image
       docker_image: name=chrisparnin/astor-d4j
+
+    - name: copy our custom nomad agent settings (do not purge image after run). 
+      copy: src=templates/custom.hcl dest=/etc/nomad.d/custom.hcl mode=744
+
+    - name: restart nomad
+      service: name=nomad state=restarted

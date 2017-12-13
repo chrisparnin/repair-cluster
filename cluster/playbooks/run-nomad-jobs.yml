@@ -14,9 +14,12 @@
     - "{{ nomad_dir }}"
     - "{{ jobs_dir }}"
     - "{{ scripts_dir }}"
+    - "{{ job_data_dir }}"
 
 #  - name: Copy Job Scripts
 #    template: src=templates/package_test.py dest={{ scripts_dir }}/package_test.py mode=744
+
+  - copy: src=../data dest={{ nomad_dir }}
 
   - copy: src=templates/repair_user_test.sh dest={{ scripts_dir }}/repair_user_test.sh mode=744
   - copy: src=templates/run_astor.sh dest={{ scripts_dir }}/run_astor.sh mode=744
