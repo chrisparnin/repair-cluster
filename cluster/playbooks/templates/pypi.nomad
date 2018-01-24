@@ -13,7 +13,7 @@ job "{{ package.bug }}_{{ package.mode }}_{{epoch}}" {
     task "install-and-import" {
       driver = "docker"
       resources {
-        memory = 2048
+        memory = 4096
       }
       config {
         image = "chrisparnin/astor-d4j"

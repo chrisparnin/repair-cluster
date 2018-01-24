@@ -9,6 +9,8 @@
         {"bug": "MATH-934",  "PID": "Math", "BID":5, "mode": "dev", "namespace": "org.apache.commons"},
         {"bug": "MATH-950",  "PID": "Math", "BID":7, "mode": "dev", "namespace": "org.apache.commons"},
         {"bug": "MATH-618",  "PID": "Math", "BID":53, "mode": "dev", "namespace": "org.apache.commons"},
-        {"bug": "MATH-414",  "PID": "Math", "BID":60, "mode": "dev", "namespace": "org.apache.commons"}
+        {"bug": "MATH-414",  "PID": "Math", "BID":60, "mode": "dev", "namespace": "org.apache.commons"},
+        {"bug": "TIME-88",  "PID": "Time", "BID":4, "mode": "dev", "namespace": "org.joda.time"},
+        {"bug": "TIME-88",  "PID": "Time", "BID":4, "mode": "user", "namespace": "org.joda.time"}
     ]
 }

@@ -1,6 +1,6 @@
 {
     "packages": [
         {"bug": "TIME-88",  "PID": "Time", "BID":4, "mode": "dev", "namespace": "org.joda.time"},
-        {"bug": "TIME-88",  "PID": "Time", "BID":4, "mode": "user", "namespace": "org.joda.time"}
+        {"bug": "MATH-950",  "PID": "Math", "BID":7, "mode": "user", "namespace": "org.apache.commons"}
     ]
 }
