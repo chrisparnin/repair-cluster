@@ -1,14 +1,6 @@
 {
     "packages": [
-        {"bug": "MATH-1021", "PID": "Math", "BID":2, "mode": "user"}, 
-        {"bug": "MATH-934",  "PID": "Math", "BID":5, "mode": "user"},
-        {"bug": "MATH-950",  "PID": "Math", "BID":7, "mode": "user"},
-        {"bug": "MATH-618",  "PID": "Math", "BID":53, "mode": "user"},
-        {"bug": "MATH-414",  "PID": "Math", "BID":60, "mode": "user"},
-        {"bug": "MATH-1021", "PID": "Math", "BID":2, "mode": "dev"}, 
-        {"bug": "MATH-934",  "PID": "Math", "BID":5, "mode": "dev"},
-        {"bug": "MATH-950",  "PID": "Math", "BID":7, "mode": "dev"},
-        {"bug": "MATH-618",  "PID": "Math", "BID":53, "mode": "dev"},
-        {"bug": "MATH-414",  "PID": "Math", "BID":60, "mode": "dev"}
+        {"bug": "TIME-88",  "PID": "Time", "BID":4, "mode": "dev", "namespace": "org.joda.time"},
+        {"bug": "TIME-88",  "PID": "Time", "BID":4, "mode": "user", "namespace": "org.joda.time"}
     ]
 }

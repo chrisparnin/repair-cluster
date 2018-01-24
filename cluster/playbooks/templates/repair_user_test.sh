@@ -19,9 +19,11 @@ function die {
 }
 
 # Check the number of arguments
-[ $# -eq 4 ] || [ $# -eq 5 ] || die "usage: $0 <issuer-tracker-id> <d4jpid> <d4jbid> <--user or --dev> [consul-address]"
+[ $# -eq 5 ] || [ $# -eq 6 ] || die "usage: $0 <issuer-tracker-id> <d4jpid> <d4jbid> <--user or --dev> <java package> [consul-address]"
 ISSUE_ID=$1
-client_addr=$5
+PACKAGE=$5
+client_addr=$6
+
 
 # The csv file that maps Defects4J's bug id to the issue id
 ID_CSV="/data/bug-tracker-IDs.csv"
@@ -117,7 +119,7 @@ echo "meta:", $SUBJECT_CLASSPATH, $CLASSNAME, $PID, $BID, $TRIGGERING_TEST
 # :target/classes
 DEP=$SUBJECT_CLASSPATH
 
-/scripts/run_astor.sh $SUBJECT_CLASSPATH $DEP $BUGGY_DIR $CLASSNAME $TRIGGERING_TEST | tee /tmp/astor.txt
+/scripts/run_astor.sh $SUBJECT_CLASSPATH $DEP $BUGGY_DIR $CLASSNAME $TRIGGERING_TEST $PACKAGE | tee /tmp/astor.txt
 #astor_output='{"output": "$(cat /tmp/astor.txt)" }'
 
 cat /tmp/astor.txt

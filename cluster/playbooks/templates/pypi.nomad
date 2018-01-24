@@ -21,7 +21,7 @@ job "{{ package.bug }}_{{ package.mode }}_{{epoch}}" {
         command = "bash"
         args = [
           "-c",
-          "/scripts/repair_user_test.sh '{{ package.bug }}' '{{package.PID}}' '{{package.BID}}' '--{{ package.mode }}' '{{ consul_client_address }}:8500'"
+          "/scripts/repair_user_test.sh '{{ package.bug }}' '{{package.PID}}' '{{package.BID}}' '--{{ package.mode }}' '{{package.namespace}}' '{{ consul_client_address }}:8500'"
         ]
       }
     }

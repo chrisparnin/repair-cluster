@@ -1,0 +1,14 @@
+{
+    "packages": [
+        {"bug": "MATH-1021", "PID": "Math", "BID":2, "mode": "user", "namespace": "org.apache.commons"}, 
+        {"bug": "MATH-934",  "PID": "Math", "BID":5, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-950",  "PID": "Math", "BID":7, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-618",  "PID": "Math", "BID":53, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-414",  "PID": "Math", "BID":60, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-1021", "PID": "Math", "BID":2, "mode": "dev", "namespace": "org.apache.commons"}, 
+        {"bug": "MATH-934",  "PID": "Math", "BID":5, "mode": "dev", "namespace": "org.apache.commons"},
+        {"bug": "MATH-950",  "PID": "Math", "BID":7, "mode": "dev", "namespace": "org.apache.commons"},
+        {"bug": "MATH-618",  "PID": "Math", "BID":53, "mode": "dev", "namespace": "org.apache.commons"},
+        {"bug": "MATH-414",  "PID": "Math", "BID":60, "mode": "dev", "namespace": "org.apache.commons"}
+    ]
+}

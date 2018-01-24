@@ -67,7 +67,7 @@
 
     - role: brianshumate.consul
       consul_client_address: 0.0.0.0
-      #consul_bind_address: 0.0.0.0
+      consul_bind_address: 0.0.0.0
       consul_data_path: "{{ data_dir }}"
       consul_encrypt_enable: false
 
