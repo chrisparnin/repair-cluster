@@ -52,3 +52,5 @@ cd /tmp/Lang_7 && defects4j compile
 cd /ACS && java -jar ACS.jar /tmp/ Lang_7
 ```
 
+Time to repair in /ACS/resultMessage/fixResult.log
+Patch in 
