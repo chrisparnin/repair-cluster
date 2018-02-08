@@ -1,0 +1,53 @@
+tool, defect4j-id, source, patch?, correct?
+astor/jgenprog, Math-2, Martinez-ISSTA16,,
+astor/jgenprog, Math-5, Martinez-ISSTA16,,
+astor/jgenprog, Math-7, Martinez-ISSTA16,,
+astor/jgenprog, Math-8, Martinez-SSTA16 ,,
+astor/jgenprog, Math-28, Martinez-ISSTA16,,
+astor/jgenprog, Math-40, Martinez-ISSTA16,,
+astor/jgenprog, Math-49, Martinez-ISSTA16,, 
+astor/jgenprog, Math-50, Martinez-ISSTA16,, 
+astor/jgenprog, Math-53, Martinez-ISSTA16,,
+astor/jgenprog, Math-60, Martinez-ISSTA16,, 
+astor/jgenprog, Math-70, Martinez-ISSTA16,, 
+astor/jgenprog, Math-71, Martinez-ISSTA16,, 
+astor/jgenprog, Math-73, Martinez-ISSTA16,,
+astor/jgenprog, Math-78, Martinez-ISSTA16,,
+astor/jgenprog, Math-80, Martinez-ISSTA16,,
+astor/jgenprog, Math-81, Martinez-ISSTA16,,
+astor/jgenprog, Math-82, Martinez-ISSTA16,,
+astor/jgenprog, Math-84, Martinez-ISSTA16,,
+astor/jgenprog, Math-85, Martinez-ISSTA16,,
+astor/jgenprog, Math-95, Martinez-ISSTA16,,
+astor/jgenprog, Chart-1, Martinez-ISSTA16,,
+astor/jgenprog, Chart-3, Martinez-ISSTA16,,
+astor/jgenprog, Chart-5, Martinez-ISSTA16,,
+astor/jgenprog, Chart-7, Martinez-ISSTA16,,
+astor/jgenprog, Chart-13, Martinez-ISSTA16,,
+astor/jgenprog, Chart-15, Martinez-ISSTA16,,
+astor/jgenprog, Chart-25, Martinez-ISSTA16,,
+astor/jgenprog, Time-4, Martinez-ISSTA16,,
+astor/jgenprog, Time-11, Martinez-ISSTA16,,
+ACS, Chart-14, Xiong-ICSE17, yes, yes
+ACS, Chart-19, Xiong-ICSE17, yes, yes
+ACS, Math-3,  Xiong-ICSE17, yes, yes
+ACS, Math-4,  Xiong-ICSE17, yes, yes 
+ACS, Math-5,  Xiong-ICSE17, yes, yes
+ACS, Math-25, Xiong-ICSE17, yes, yes
+ACS, Math-35, Xiong-ICSE17, yes, yes
+ACS, Math-61, Xiong-ICSE17, yes, yes
+ACS, Math-82, Xiong-ICSE17, yes, yes
+ACS, Math-85, Xiong-ICSE17, yes, yes
+ACS, Math-89, Xiong-ICSE17, yes, yes
+ACS, Math-90, Xiong-ICSE17, yes, yes
+ACS, Math-93, Xiong-ICSE17, yes, yes
+ACS, Math-99, Xiong-ICSE17, yes, yes
+ACS, Time-15, Xiong-ICSE17, yes, yes
+ACS, Lang-7,  Xiong-ICSE17, yes, yes
+ACS, Lang-24, Xiong-ICSE17, yes, yes
+ACS, Lang-35, Xiong-ICSE17, yes, yes
+ACS, Lang-39, Xiong-ICSE17, yes, no
+ACS, Math-28, Xiong-ICSE17, yes, no
+ACS, Math-73, Xiong-ICSE17, yes, no
+ACS, Math-81, Xiong-ICSE17, yes, no
+ACS, Math-97, Xiong-ICSE17, yes, no
