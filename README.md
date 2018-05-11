@@ -102,13 +102,20 @@ docker run --rm -it -v$SCRIPT_DIR:/scripts -v$DATA_DIR:/data chrisparnin/astor-d
 
 #### Running ACS repair manually.
 
+Pull a docker image for ACS.
 ```
 docker pull chrisparnin/acs
 docker run --rm -it chrisparnin/acs:latest
+```
 
+Inside the running container, checkout a defects4j bug
+```
 defects4j checkout -p Lang -v 7b -w /tmp/Lang_7
 cd /tmp/Lang_7 && defects4j compile
+```
 
+Run ACS to repair the bug.
+```
 cd /ACS && java -jar ACS.jar /tmp/ Lang_7
 ```
 
@@ -117,7 +124,7 @@ To run a repair of a user provided test manually, provide a volume that contains
 docker run --rm -it -v/tmp/repair-cluster/user_test:/user_test/ chrisparnin/acs:latest
 ```
 
-Remove the triggering test(s)
+Inside the running container, remove the triggering test(s)
 ```
 SUBJECT_TESTDIR=$(cd /tmp/Lang_7 && defects4j export -p dir.src.tests)
 $D4J_HOME/framework/util/rm_broken_tests.pl $D4J_HOME/framework/projects/LANG/7 /tmp/Lang_7/$SUBJECT_TESTDIR
