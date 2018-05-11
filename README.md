@@ -2,6 +2,13 @@
 
 Infrastructure for scalable program repair.
 
+
+### Contents
+
+The `repair` directory includes Dockerfile specifications for environments that can run the respective tool. We also provide a defects4j Dockerfile. Prebuilt images are also available on [DockerHub](https://hub.docker.com/u/chrisparnin/).
+
+The `cluster` directory includes the configuration scripts necessary for setting up the cluster.
+
 ### Setup
 
     # provision cluster
