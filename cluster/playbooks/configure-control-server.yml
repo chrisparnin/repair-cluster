@@ -69,6 +69,7 @@
 
   - name: Install Roles
     command: ansible-galaxy install -r {{ harness_directory }}/playbooks/requirements.yml
-
+    become: yes
+    
   - name: Copy Data Files
     copy: src=../data dest={{ harness_directory }}
