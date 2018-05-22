@@ -50,7 +50,7 @@ Note: This step might take a while.
     # Install nomad and consul (need sudo, ensures has rights to /etc/ansible/roles)
     sudo ansible-playbook -i inventory playbooks/install-nomad.yml
 
-Verify Consul is accessible. (http://192.168.33.11:8500/ui for Vagrant)
+Verify Consul is accessible. (http://192.168.77.11:8500/ui for Vagrant)
 
 ## Schedule nomad jobs
 
