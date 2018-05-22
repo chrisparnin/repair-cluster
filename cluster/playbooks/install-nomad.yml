@@ -66,10 +66,13 @@
 
 
     - role: brianshumate.consul
+# May 22 18:07:27 ubuntu-xenial consul[13074]: ==> Advertise address cannot be 0.0.0.0, :: or [::]
+# sudo journalctl -u consul.service
       consul_client_address: 0.0.0.0
-      consul_bind_address: 0.0.0.0
+#      consul_bind_address: 0.0.0.0
       consul_data_path: "{{ data_dir }}"
       consul_encrypt_enable: false
+#      consul_raw_key: '123456'
 
 
   # Keeping last since slow when debugging roles.
