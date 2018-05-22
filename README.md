@@ -36,6 +36,7 @@ Tips for creating virtual machines with these tools, as well as common problems 
 #### Provision cluster VMs in VirtualBox
 
     # provision cluster
+    cd cluster/
     vagrant up
 
 #### Configure ansible control box and cluster.
