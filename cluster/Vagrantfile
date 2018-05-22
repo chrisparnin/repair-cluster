@@ -21,7 +21,7 @@ Vagrant.configure('2') do |config|
 
       ansible.playbook = 'playbooks/configure-control-server.yml'
       ansible.install_mode = "pip"
-      ansible.version = "2.3.2.0"
+      ansible.version = "2.4.4.0"
       ansible.extra_vars = {
           inventory_file_name: '../inventory.vagrant',
       }
