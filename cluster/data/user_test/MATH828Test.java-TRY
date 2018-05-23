@@ -1,0 +1,825 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import org.apache.commons.math3.optimization.GoalType;
+import org.apache.commons.math3.optimization.linear.LinearConstraint;
+import org.apache.commons.math3.optimization.linear.LinearObjectiveFunction;
+import org.apache.commons.math3.optimization.linear.Relationship;
+import org.apache.commons.math3.optimization.linear.SimplexSolver;
+import org.apache.commons.math3.optimization.PointValuePair;
+import org.apache.commons.math3.util.Precision;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+// public class ApacheSimplexWrapperTest 
+public class MATH828Test
+{
+	public static PrintStream out = null;
+	
+	final int INPUT_ARGUMENTS_COUNT = 4;
+	final int OUTPUT_ARGUMENTS_COUNT = 3;
+	final int ENTITIES_COUNT = 15;
+	final int MIN_ARGUMENT_VALUE = 1;
+	final int MAX_ARGUMENT_VALUE = 100;
+	final int ITERATIONS_COUNT = 32;
+	final double EPSILON = 1E-5;
+	final boolean IS_INTEGER = true;
+	
+	Set<String> inputArguments;
+	Set<String> outputArguments;
+	Set<Entity> entities;
+	
+	enum CaseCode{
+		simple2x2, threeXandTwoQ
+	}
+	
+	@BeforeClass
+	public static void init()
+	{
+		out = System.out;
+		// out = createPrintStream("SimplexApacheMath3");
+	}
+	
+	public static PrintStream createPrintStream(String name)
+	{
+		PrintStream printStream = null;
+		File file;
+		try {
+			SimpleDateFormat df = new SimpleDateFormat("y-M-d_H-m-s");
+			file = new File(name + "_" + df.format(new Date()) + ".test");
+			printStream = new PrintStream(file);
+			System.out.println("Test file '" + file.getAbsolutePath() + "'");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			if(printStream != null){
+				printStream.close();
+			}
+			return null;
+		}
+		return printStream;
+	}
+	
+	public static void main(String[] argv)
+	{
+		MATH828Test test = new MATH828Test();
+		MATH828Test.init();
+		test.testCalculate();
+	}
+	
+	@Test
+	public void testCalculate()
+	{		
+		int iterationCaseCode;
+		for(int c=0; c < ITERATIONS_COUNT; c++)
+		{
+			iterationCaseCode = c;
+
+			System.out.println("Iteration " + (c + 1) + " of " + ITERATIONS_COUNT);
+			out.println("\n----------------------------\nTest #" + (c + 1) + "\n");
+			
+			doIteration(iterationCaseCode);
+		}
+	}
+	
+	void doIteration(int code)
+	{	
+		printCaption();
+		
+		if(code == 0){
+			prepareCase(CaseCode.simple2x2);
+		}
+		else{
+			inputArguments = prepareInputArguments(INPUT_ARGUMENTS_COUNT);
+			outputArguments = prepareOutputArguments(OUTPUT_ARGUMENTS_COUNT);
+			entities = buildEntities(ENTITIES_COUNT, inputArguments, outputArguments, "e");
+		}
+		
+		printArguments("Input arguments", inputArguments);
+		printArguments("Output arguments", outputArguments);
+		printArgumentsMatrices(entities, inputArguments, outputArguments);
+		printEntities(entities);
+		
+		ApacheSimplexWrapper algorithm = new ApacheSimplexWrapper();
+		algorithm.setPrintStream(out);
+		algorithm.setPrintCalculations(true);
+		
+		try
+		{
+			algorithm.findOptimum(ApacheSimplexWrapper.Solver.ApacheMath3, entities, inputArguments, outputArguments, EPSILON);
+			checkResult(entities);
+			printResult(entities);
+		}
+		catch(IllegalArgumentException ie){
+			out.println("EXCEPTION:\t" + ie.getMessage());
+			ie.printStackTrace(out);
+		}
+	}
+
+	Set<String> prepareInputArguments(int argumentsCount){
+		return prepareArguments(argumentsCount, "x");
+	}
+	
+	Set<String> prepareOutputArguments(int argumentsCount){
+		return prepareArguments(argumentsCount, "q");
+	}
+	
+	Set<String> prepareArguments(int argumentsCount, String letter)
+	{
+		Set<String> aguments = new HashSet<String>(argumentsCount);
+		for(int i=0; i < argumentsCount; i++){
+			aguments.add(letter + (i + 1));
+		}
+		return aguments;
+	}
+	
+	void prepareCase(CaseCode code)
+	{
+		entities = new HashSet<Entity>();
+		if(code == CaseCode.simple2x2)
+		{
+			inputArguments = new HashSet<String>(2);
+			for(int i=0; i < 1; i++){
+				inputArguments.add("x");
+			}
+			outputArguments = new HashSet<String>(2);
+			for(int i=0; i < 1; i++){
+				outputArguments.add("q");
+			} 
+			
+			Entity entity = null;
+			
+			entity = new Entity("e1");
+			entity.addInputArgument("x", 1);
+			entity.addOutputArgument("q", 2);
+			entities.add(entity);
+			
+			entity = new Entity("e2");
+			entity.addInputArgument("x", 2);
+			entity.addOutputArgument("q", 1);
+			entities.add(entity);
+		}
+	}
+	
+	Set<Entity> buildEntities(int count, Set<String> inputArguments, Set<String> outputArguments, String entityNameLetter)
+	{
+		if(count < 1){
+			return null;
+		}
+		Set<Entity> entities = new HashSet<Entity>(count);
+		
+		double value;
+		double minInputArgumentValue = Integer.MAX_VALUE;
+		double maxInputArgumentValue = Integer.MIN_VALUE;
+		double minOutputArgumentValue = Integer.MAX_VALUE;
+		double maxOutputArgumentValue = Integer.MIN_VALUE;		
+		Random rand = new Random(System.currentTimeMillis());
+		
+		for(int i=0; i < count; i++)
+		{
+			Entity entity = new Entity(entityNameLetter + (i + 1));
+			for(String inputArgument: inputArguments){
+				value = MIN_ARGUMENT_VALUE + rand.nextInt(MAX_ARGUMENT_VALUE);
+				if(!IS_INTEGER){
+					value += rand.nextDouble();
+				}
+				entity.addInputArgument(inputArgument, value);
+				if(value < minInputArgumentValue){
+					minInputArgumentValue = value;
+				}
+				if(value > maxInputArgumentValue){
+					maxInputArgumentValue = value;
+				}
+			}
+			for(String outputArgument: outputArguments){
+				value = MIN_ARGUMENT_VALUE + rand.nextInt(MAX_ARGUMENT_VALUE);
+				if(!IS_INTEGER){
+					value += rand.nextDouble();
+				}
+				entity.addOutputArgument(outputArgument, value);
+				if(value < minOutputArgumentValue){
+					minOutputArgumentValue = value;
+				}
+				if(value > maxOutputArgumentValue){
+					maxOutputArgumentValue = value;
+				}
+			}
+			entities.add(entity);
+		}
+		
+		out.format(Locale.US,
+				"\n" +
+				"Min input argument value = %.4f, max input argument value = %.4f\n" +
+				"Min output argument value = %.4f, max output argument value = %.4f\n", 
+				minInputArgumentValue, maxInputArgumentValue, minOutputArgumentValue, maxOutputArgumentValue);
+		
+		return entities;
+	}
+	
+	void checkResult(Set<Entity> entities)
+	{
+		for(Entity entity: entities)
+		{
+			if(entity.getTheta() > 1 + EPSILON){
+				System.out.println("WRONG THETHA");
+				out.format(Locale.US, "Entity '%s' theta = %0.12f (it must be within [0,1] by definition of the problem)", entity.getURI(), entity.getTheta());
+			}
+		}
+	}
+	
+	void printCaption()
+	{
+		out.println("\n" +
+				"\t\tLinear Problem\n" +
+				"f<t>(t,L) ---> min \t <===> 1*t + ∑{l(i)*0}<i=0, R> + 0 ---> min\n" +
+				"s.t.\n" +
+				"-q(r) + QL >= 0 \t <====> 0*t + ∑{q(i)*l(i)}<i=1,R> ≥ q(r) \n" +
+				"x(r)t - XL >= 0 \t <====> x(r)*t - ∑{x(i)*l(i)}<i=1,R> ≥ 0 \n" +
+				"where r is the number of the current entitiy, R is total number of entities" +
+				"\n\n");
+	}
+	
+	void printArguments(String argumentsName, Set<String> arguments)
+	{
+		List<String> orderedArgumentsSet = new ArrayList<String>(arguments);
+		Collections.sort(orderedArgumentsSet);
+		out.print(argumentsName + "\t [");
+		for(String item: orderedArgumentsSet){
+			out.print(item + " ");
+		}
+		out.println("]");
+	}
+	
+	void printEntities(Set<Entity> entitiesSet)
+	{
+		List<Entity> entities = getOrderedEntitiesList(entitiesSet);
+		
+		out.println("\nENTITIES\n");
+		for(Entity entity: entities)
+		{
+			out.print(entity.getURI());
+			
+			out.print("\t Input arguments values {");
+			for(String argument: entity.getInputArgumentsNames()){
+				out.format(Locale.US, " %s=%.2f ", argument, entity.getInputArgumentValue(argument));
+			}
+			out.println("}");
+			
+			out.print("\t Output arguments values {");
+			for(String argument: entity.getOutputArgumentsNames()){
+				out.format(Locale.US, " %s=%.2f ", argument, entity.getOutputArgumentValue(argument));
+			}
+			out.println("}");
+			out.println();
+		}
+	}
+	
+	void printArgumentsMatrices(Set<Entity> entities, Set<String> inputArguments, Set<String> outputArguments)
+	{
+		List<String> orderedInputArgumentsSet = new ArrayList<String>(inputArguments);
+		Collections.sort(orderedInputArgumentsSet);
+		List<String> orderedOutputArgumentsSet = new ArrayList<String>(outputArguments);
+		Collections.sort(orderedOutputArgumentsSet);
+		List<Entity> orderedEntitiesSet = getOrderedEntitiesList(entities);
+		
+		out.println("\nInput arguments matrix:");
+		for(int i=0; i < orderedInputArgumentsSet.size(); i++){
+			for(int j=0; j < entities.size(); j++){
+				out.format(Locale.US, "\t%.2f", orderedEntitiesSet.get(j).getInputArgumentValue(orderedInputArgumentsSet.get(i)));
+			}
+			out.println();
+		}
+		
+		out.println("\nOutput arguments matrix:");
+		for(int i=0; i < orderedOutputArgumentsSet.size(); i++){
+			for(int j=0; j < entities.size(); j++){
+				out.format(Locale.US, "\t%.2f", orderedEntitiesSet.get(j).getOutputArgumentValue(orderedOutputArgumentsSet.get(i)));
+			}
+			out.println();
+		}
+	}
+	
+	void printResult(Set<Entity> entitiesSet)
+	{
+		List<Entity> entities = getOrderedEntitiesList(entitiesSet);
+		out.println("\nOptimization Result\n");
+		for(Entity entity: entities){
+			out.format(Locale.US, "\t'%s': theta = %.12f, lambdas = [", entity.getURI(), entity.getTheta()); 
+			for(String lambda: entity.getLambdas()){
+				out.format(Locale.US, "%s=%.12f ", lambda, entity.getLambdaValue(lambda));
+			}
+			out.println("]");
+		}
+	}
+	
+	List<Entity> getOrderedEntitiesList(Set<Entity> entitiesSet)
+	{
+		List<Entity> entities = new ArrayList<Entity>(entitiesSet);
+		Collections.sort(entities, new Comparator<Entity>(){
+			@Override
+			public int compare(Entity e1, Entity e2) {
+				return e1.getURI().compareTo(e2.getURI());
+			}
+			
+		});
+		return entities;
+	}
+}
+
+class ApacheSimplexWrapper 
+{
+	static boolean failed = false;
+
+	public enum Solver{
+		ApacheMath3
+	}
+		
+	private PrintStream out = System.out;
+	
+	private List<String> inputArguments;
+	private List<String> outputArguments;
+	private List<Entity> entities;
+	private double[][] outputLambdaMatrxCoefficients;
+	private double[][] inputLambdaMatrxCoefficients;
+	private String[] lambdasNames;
+	private boolean printCalculations = false;
+	private double epsilon = 0;
+	
+	public void findOptimum(Solver solver, Set<Entity> entitiesSet, Set<String> inputArgumentsSet, Set<String> outputArgumentsSet, double epsilon) 
+			throws IllegalArgumentException
+	{
+		if(solver == null){
+			throw new IllegalArgumentException("Simplex method solver is not defined");
+		}
+		prepareArguments(inputArgumentsSet, outputArgumentsSet);
+		prepareEntities(entitiesSet, inputArgumentsSet, outputArgumentsSet);
+		prepareLambdas(entities, inputArguments, outputArguments);
+		this.epsilon = epsilon;
+
+		for(Entity entity: this.entities)
+		{
+			switch(solver)
+			{
+			case ApacheMath3:
+				findEntityOptimumApachmath3(entity);
+				break;
+			}
+		}
+	}
+	
+	private void findEntityOptimumApachmath3(Entity entity)
+	{
+		/* 
+		 * -q(r) + QL >= 0	<=>		QL >= q(r)
+		 * tx(r) - XL >= 0;
+		 * L >= 0;
+		 * 0 <= t <= 1
+		 */
+		println("\n\n\t\t%s\n\n", SimplexSolver.class.getName());
+		
+		double[] leftsideCoeffs = null;
+		double rightsideValue = Double.NaN;
+		
+		double[] objectiveCoeffs = new double[1 + entities.size()];
+		Arrays.fill(objectiveCoeffs, 0);
+		objectiveCoeffs[0] = 1;
+		LinearObjectiveFunction objectiveFunction = new LinearObjectiveFunction(objectiveCoeffs, 0);
+		
+		if(printCalculations){
+			print("Objective function %.4f*t", objectiveCoeffs[0]);
+			for(int i=1; i < objectiveCoeffs.length; i++){
+				print(" + %.4f*l(%d)", objectiveCoeffs[i], i);
+			}
+			println(" ---> min");
+		}
+	
+		if(printCalculations){
+			println("QL matrix values: ");
+			printMatrix(outputLambdaMatrxCoefficients);
+			printEntityOutputColumn(entity);
+			
+			println("XL matrix values: ");
+			printMatrix(inputLambdaMatrxCoefficients);
+			printEntityInputColumn(entity);
+		}
+				
+		Collection<LinearConstraint> constraints = new ArrayList<LinearConstraint>();
+		
+		/* First constraints row set 
+		 * -q(r) + QL >= 0   <--->   0*t + QL >= q(r)
+		 * 
+		 * there are as many rows as the size of Q set
+		 * */
+		for(int i=0; i < outputArguments.size(); i++)
+		{
+			leftsideCoeffs = new double[1 + entities.size()];
+			leftsideCoeffs[0] = 0;
+			for(int j=1; j < leftsideCoeffs.length; j++){
+				leftsideCoeffs[j] = outputLambdaMatrxCoefficients[i][j-1];
+			}
+			rightsideValue = entity.getOutputArgumentValue(outputArguments.get(i));
+			constraints.add(new LinearConstraint(leftsideCoeffs, Relationship.GEQ, rightsideValue));
+
+			if(printCalculations){
+				printConstraint("QL #" + (i+1), leftsideCoeffs, ">=", rightsideValue);
+			}
+		}
+		
+		/* Second constraints row set 
+		 * x(r) - XL >= 0
+		 * 
+		 * there are as many rows as the size of X set
+		 * */
+		for(int i=0; i < inputArguments.size(); i++)
+		{
+			leftsideCoeffs = new double[1 + entities.size()];
+			leftsideCoeffs[0] = entity.getInputArgumentValue(inputArguments.get(i));
+			for(int j=1; j < leftsideCoeffs.length; j++){
+				leftsideCoeffs[j] = -inputLambdaMatrxCoefficients[i][j-1];
+			}
+			constraints.add(new LinearConstraint(leftsideCoeffs, Relationship.GEQ, 0));
+			if(printCalculations){
+				printConstraint("XL #" + (i+1), leftsideCoeffs, ">=", 0);
+			}
+		}
+		
+		/* Third constraint row set
+		 * L >= 0
+		 * there are as many rows as the number of entities = the number of lambdas
+		 */
+		for(int i=0; i < lambdasNames.length; i++){
+			leftsideCoeffs = new double[1 + entities.size()];
+			leftsideCoeffs[0] = 0;
+			for(int j=1; j < leftsideCoeffs.length; j++){
+				if(j == (i + 1)){
+					leftsideCoeffs[j] = 1;
+				}else{
+					leftsideCoeffs[j] = 0;
+				}
+			}
+			constraints.add(new LinearConstraint(leftsideCoeffs, Relationship.GEQ, 0));
+			if(printCalculations){
+				printConstraint(lambdasNames[i], leftsideCoeffs, ">=", 0);
+			}
+		}
+
+		SimplexSolver solver = new SimplexSolver(epsilon, 1);
+		try
+		{
+			solver.setMaxIterations(1000);
+			PointValuePair optimum = solver.optimize(objectiveFunction, constraints, GoalType.MINIMIZE, true);
+						
+			println("Objective function optimum = %.12f", optimum.getValue());
+			println("Variables values:");
+			double[] vars = optimum.getPoint();
+			String varName = null;
+			for(int i=0; i < vars.length; i++)
+			{
+				if(i == 0){
+					entity.setTheta(vars[i]);
+					varName = "t";
+				}else{
+					varName = "l(" + i + ")";
+					entity.setLambda(varName, vars[i]);
+				}
+				println("%s = %.12f", varName, vars[i]);
+			}
+			println("Key:");
+			for(double key: optimum.getKey()){
+				println("%.12f", key);
+			}
+			verifySolution(optimum, entity);
+		}
+		catch(Exception ex){
+			System.out.println("EXCEPTION: " + ex.getMessage());
+			println(ex.getMessage());
+			ex.printStackTrace(out);
+			throw ex;
+		}
+	}
+	
+	private void verifySolution(PointValuePair solution, Entity entity)
+	{
+		println("\nVerification\n");
+		
+		print("1. First row set -q(r) + QL >= 0 <---> QL >= q(r) verification: ");
+		for(int i=0; i < outputLambdaMatrxCoefficients.length; i++)
+		{
+			double[] leftside = new double[1 + outputLambdaMatrxCoefficients[i].length];
+			double rightsideValue = entity.getOutputArgumentValue(outputArguments.get(i));
+			
+			print("\n\t%d: %.4f*t ", i+1, leftside[0]);
+			double sum = 0;
+			for(int j=0; j < outputLambdaMatrxCoefficients[i].length; j++){
+				leftside[1 + j] = outputLambdaMatrxCoefficients[i][j];
+				sum += leftside[1 + j] * solution.getPoint()[j + 1];
+				print(" + %.4f*%.4f ", leftside[1 + j], solution.getPoint()[j + 1]);
+			}
+			print(" >= %.4f   <--------> %.12f >= %.12f", rightsideValue, sum, rightsideValue);
+			if(Precision.compareTo(sum, rightsideValue, epsilon) < 0){
+				println("\n ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WRONG -q(r) + QL >= 0 EQUATION VALUES! ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
+			}
+		}
+		println();
+		
+		print("2. Second equation set tx(r) - XL >= 0 verifications: ");
+		double[][] xlEquationSet = new double[inputLambdaMatrxCoefficients.length][inputLambdaMatrxCoefficients[0].length + 1];
+		for(int i=0; i < xlEquationSet.length; i++){
+			float sum = 0;
+			xlEquationSet[i][0] = entity.inputArguments.get(inputArguments.get(i));
+			sum += xlEquationSet[i][0] * solution.getPoint()[0];
+			print("\n\t%d: %.4f*t ", i+1, xlEquationSet[i][0]); 
+			for(int j=0; j < inputLambdaMatrxCoefficients[i].length; j++){				
+				xlEquationSet[i][1 + j] = -1 * inputLambdaMatrxCoefficients[i][j];
+				sum += xlEquationSet[i][1 + j] * solution.getPoint()[1 + j];
+				print(" + %.4f*%.4f ", xlEquationSet[i][1 + j], solution.getPoint()[1 + j]);
+			}
+			print(" >= 0   <--------->   %.12f >= 0", sum);
+			if(Precision.compareTo(sum, 0, epsilon) < 0){
+				println("\n ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WRONG x(r) - XL >= 0 EQUATION VALUES! ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n\n");
+			}
+			
+		}
+		print("\n");
+	}
+
+	private void printEntityOutputColumn(Entity entity) 
+	{
+		print("Entity '%s's vector q = [", entity.getURI());
+		for(int i=0; i < outputArguments.size(); i++){
+			print(" %.4f ", entity.getOutputArgumentValue(outputArguments.get(i)));
+		}
+		println("]");
+	}
+	
+	private void printEntityInputColumn(Entity entity) 
+	{
+		print("Entity '%s's vector x = [", entity.getURI());
+		for(int i=0; i < inputArguments.size(); i++){
+			print(" %.4f ", entity.getInputArgumentValue(inputArguments.get(i)));
+		}
+		println("]");
+	}
+
+	private void prepareArguments(Set<String> inputArgumentsSet, Set<String> outputArgumentsSet) throws IllegalArgumentException
+	{
+		checkArguments(inputArgumentsSet, outputArgumentsSet);	
+		this.inputArguments = new ArrayList<String>(inputArgumentsSet);
+		Collections.sort(inputArguments);
+		this.outputArguments = new ArrayList<String>(outputArgumentsSet);
+		Collections.sort(outputArguments);
+	}
+	
+	private void checkArguments(Set<String> inputArguments, Set<String> outputArguments) throws IllegalArgumentException 
+	{
+		if(inputArguments.size() < 1){
+			throw new IllegalArgumentException("Input arguments set size must be greater than 0");
+		}
+		if(outputArguments.size() < 1){
+			throw new IllegalArgumentException("Output arguments set size must be greater than 0");
+		}
+	}
+	
+	private void prepareEntities(Set<Entity> entitiesSet, Set<String> inputArgumentsSet, Set<String> outputArgumentsSet)
+	{
+		checkEntities(entitiesSet, inputArgumentsSet, outputArgumentsSet);
+		this.entities = new ArrayList<Entity>(entitiesSet);
+		Collections.sort(entities, new Comparator<Entity>(){
+			@Override
+			public int compare(Entity o1, Entity o2) {
+				return o1.getURI().compareTo(o2.getURI());
+			}
+		});
+	}
+	
+	private void checkEntities(Set<Entity> entities, Set<String> inputArguments, Set<String> outputArguments)
+	{
+		for(Entity entity: entities){
+			for(String argument: entity.inputArguments.keySet()){
+				if(!inputArguments.contains(argument)){
+					throw new IllegalArgumentException("Entity '" + entity.getURI() + 
+							"' has a value of an input argument that is not in the input arguments set");
+				}
+			}
+			for(String argument: entity.outputArguments.keySet()){
+				if(!outputArguments.contains(argument)){
+					throw new IllegalArgumentException("Entity '" + entity.getURI() + 
+							"' has a value of an input argument that is not in the output arguments set");
+				}
+			}
+		}
+		for(String inputArgument: inputArguments){
+			for(Entity entity: entities){
+				if(!entity.inputArguments.containsKey(inputArgument)){
+					throw new IllegalArgumentException("Entity '" + entity.getURI() + 
+							"' has not a value for the input argument '" + inputArgument + "'");
+				}
+			}
+		}
+		for(String outputArgument: inputArguments){
+			for(Entity entity: entities){
+				if(!entity.inputArguments.containsKey(outputArgument)){
+					throw new IllegalArgumentException("Entity '" + entity.getURI() + 
+							"' has not a value for the output argument '" + outputArgument + "'");
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Builds lambdas and gives them names for better observing
+	 * @param entities
+	 * @param inputArguments
+	 * @param outputArguments
+	 */
+	private void prepareLambdas(List<Entity> entities, List<String> inputArguments, List<String> outputArguments) 
+	{
+		inputLambdaMatrxCoefficients = collectInputLambdaMatrixCoefficients(inputArguments, entities);
+		outputLambdaMatrxCoefficients = collectOutputLambdaMatrixCoefficients(outputArguments, entities);
+		lambdasNames = new String[entities.size()];
+		for(int i=0; i < lambdasNames.length; i++){
+			lambdasNames[i] = "L" + (i + 1);
+		}	
+	}
+	
+	/**
+	 * Builds a matrix of input lambda coefficients to use within x(r)*t - XL >= 0 constrains set
+	 * @param inputArguments
+	 * @param entities
+	 * @return the matrix
+	 */
+	public double[][] collectInputLambdaMatrixCoefficients(List<String> inputArguments, List<Entity> entities)
+	{
+		double[][] coefficients = new double[inputArguments.size()][entities.size()];
+		for(int i=0; i < inputArguments.size(); i++){
+			for(int j=0; j < entities.size(); j++){
+				coefficients[i][j] = entities.get(j).getInputArgumentValue(inputArguments.get(i));
+			}
+		}
+		return coefficients;
+	}
+	
+	/**
+	 * Builds a matrix of output lambda coefficients to use within -q(r) + QL >= 0 constrains set
+	 * @param outputArguments
+	 * @param entities
+	 * @return the matrix
+	 */
+	public double[][] collectOutputLambdaMatrixCoefficients(List<String> outputArguments, List<Entity> entities)
+	{
+		double[][] coefficients = new double[outputArguments.size()][entities.size()];
+		for(int i=0; i < outputArguments.size(); i++){
+			for(int j=0; j < entities.size(); j++){
+				coefficients[i][j] = entities.get(j).getOutputArgumentValue(outputArguments.get(i));
+			}
+		}
+		return coefficients;
+	}
+	
+	private void printMatrix(double[][] matrix){
+		for(int i=0; i < matrix.length; i++){
+			out.print(i + ": ");
+			for(int j=0; j < matrix[i].length; j++){
+				out.print("\t" + matrix[i][j]);
+			}
+			out.println();
+		}
+	}
+	
+	
+	private void printConstraint(String caption, double[] constraint, String equalitySign, double rightsideValue) {
+		print("Constraint %s :\t", caption);
+		for(int i=0; i < constraint.length; i++){
+			print(" %.4f", constraint[i]);
+		}
+		println(" %s %.4f", equalitySign, rightsideValue);
+	}
+	
+	/**
+	 * Turns on or off calculations printing
+	 * @param print
+	 */
+	public void setPrintCalculations(boolean print){
+		this.printCalculations = print;
+	}
+	
+	/**
+	 * Sets the print stream
+	 * @param stream
+	 */
+	public void setPrintStream(PrintStream stream){
+		if(stream == null){
+			stream = System.out;
+		}
+		this.out = stream;
+	}
+	
+	private void print(String format, Object... args){
+		if(out == null){
+			return;
+		}
+		out.format(Locale.US, format, args);
+	}
+	
+	private void println(String format, Object... args){
+		if(out == null){ return; }
+		print(format + "\n", args);
+	}
+	
+	private void println(){
+		if(out == null){ return; }
+		out.println();
+	}
+}
+
+
+class Entity
+{
+	String uri;
+	Map<String, Double> inputArguments = new HashMap<String, Double>();
+	Map<String, Double> outputArguments = new HashMap<String, Double>();
+	Double theta = Double.NaN;
+	Map<String, Double> lambdas = new HashMap<String, Double>();
+
+	public Entity(String uri, Map<String, Double> inputArguments, Map<String, Double> outputArguments){
+		this.uri = uri;
+		this.inputArguments = inputArguments;
+		this.outputArguments = outputArguments;
+	}
+	public Entity(String uri){
+		this.uri = uri;
+	}
+
+	public String getURI(){
+		return uri;
+	}
+
+	public double[] getOptimumValues()
+	{
+		double[] values = new double[1 + lambdas.size()];
+		values[0] = theta;
+		List<String> lambdasList = new ArrayList<String>(lambdas.keySet());
+		Collections.sort(lambdasList);
+		int index = 1;
+		for(String item: lambdasList){
+			values[index++] = lambdas.get(item);
+		}
+		return values;
+	}
+
+	public double getLambdaValue(String lambda){
+		return lambdas.get(lambda);
+	}
+	void setLambda(String name, double value){
+		this.lambdas.put(name, value);
+	}
+	public String[] getLambdas(){
+		List<String> sorted = new ArrayList<String>(lambdas.keySet());
+		Collections.sort(sorted);
+		return sorted.toArray(new String[0]);
+	}
+
+	public Double getTheta(){
+		return this.theta;
+	}
+	void setTheta(Double value){
+		this.theta = value;
+	}
+
+	public void addInputArgument(String arg, double value){
+		inputArguments.put(arg, value);
+	}
+	public void addOutputArgument(String arg, double value){
+		outputArguments.put(arg, value);
+	}
+	public double getInputArgumentValue(String argument){
+		return inputArguments.get(argument);
+	}
+	public double getOutputArgumentValue(String argument){
+		return outputArguments.get(argument);
+	}
+	public List<String> getInputArgumentsNames(){
+		return getSortedArgumentsNames(inputArguments.keySet());
+	}
+	public List<String> getOutputArgumentsNames(){
+		return getSortedArgumentsNames(outputArguments.keySet());
+	}
+	private List<String> getSortedArgumentsNames(Set<String> arguments){
+		List<String> names = new ArrayList<String>(arguments);
+		Collections.sort(names);
+		return names;
+	}
+}

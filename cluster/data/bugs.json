@@ -1,6 +1,16 @@
 {
     "packages": [
-        {"bug": "TIME-88",  "PID": "Time", "BID":4, "mode": "dev", "namespace": "org.joda.time"},
-        {"bug": "MATH-950",  "PID": "Math", "BID":7, "mode": "user", "namespace": "org.apache.commons"}
+        {"bug": "MATH-950",  "PID": "Math", "BID":7, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-950",  "PID": "Math", "BID":7, "mode": "dev", "namespace": "org.apache.commons"},
+        {"bug": "MATH-942",  "PID": "Math", "BID":8, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-942",  "PID": "Math", "BID":8, "mode": "dev", "namespace": "org.apache.commons"},
+        {"bug": "MATH-645",  "PID": "Math", "BID":49, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-645",  "PID": "Math", "BID":49, "mode": "dev", "namespace": "org.apache.commons"},
+        {"bug": "MATH-318",  "PID": "Math", "BID":80, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-318",  "PID": "Math", "BID":80, "mode": "dev", "namespace": "org.apache.commons"},
+        {"bug": "MATH-283",  "PID": "Math", "BID":84, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-283",  "PID": "Math", "BID":84, "mode": "dev", "namespace": "org.apache.commons"},
+        {"bug": "MATH-227",  "PID": "Math", "BID":95, "mode": "user", "namespace": "org.apache.commons"},
+        {"bug": "MATH-227",  "PID": "Math", "BID":95, "mode": "dev", "namespace": "org.apache.commons"}
     ]
 }
